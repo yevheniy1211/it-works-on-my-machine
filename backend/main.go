@@ -28,6 +28,7 @@ func main() {
 	// Server
 	log.Println("Starting server...")
 	router := gin.New()
+    router.Use(corsMiddleware())
 	router.GET("/fibonacci", fibonacciHandler)
 	router.POST("/video", videoPostHandler)
 	router.GET("/videos", videosGetHandler)
@@ -78,4 +79,20 @@ func httpErrorInternalServerError(err error, ctx *gin.Context) {
 func httpError(err error, ctx *gin.Context, status int) {
 	log.Println(err.Error())
 	ctx.String(status, err.Error())
+}
+
+func corsMiddleware() gin.HandlerFunc {
+	return func(c *gin.Context) {
+		c.Writer.Header().Set("Access-Control-Allow-Origin", "http://localhost:3000")
+		c.Writer.Header().Set("Access-Control-Allow-Methods", "GET, POST, PUT, DELETE, OPTIONS")
+		c.Writer.Header().Set("Access-Control-Allow-Headers", "Origin, Content-Type, Accept, Authorization")
+		c.Writer.Header().Set("Access-Control-Allow-Credentials", "true")
+
+		if c.Request.Method == http.MethodOptions {
+			c.AbortWithStatus(204)
+			return
+		}
+
+		c.Next()
+	}
 }
