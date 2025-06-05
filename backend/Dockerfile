@@ -1,15 +1,14 @@
-FROM golang:1.22-alpine
+FROM golang:1.21.3-alpine
 
 RUN apk add --no-cache git
 
 WORKDIR /app
 
 COPY go.mod go.sum ./
-RUN go mod download
-
+COPY vendor/ ./vendor/
 COPY *.go ./
 
-RUN go build -o it-works
+RUN go build -mod=vendor -o it-works
 
 EXPOSE 8080
 

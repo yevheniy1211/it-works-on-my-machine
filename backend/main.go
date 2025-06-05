@@ -13,51 +13,7 @@ import (
 	"time"
 
 	"github.com/gin-gonic/gin"
-
-    "github.com/prometheus/client_golang/prometheus"
-    "github.com/prometheus/client_golang/prometheus/promhttp"
 )
-
-var (
-	httpRequestsTotal = prometheus.NewCounterVec(
-		prometheus.CounterOpts{
-			Name: "http_requests_total",
-			Help: "Total number of HTTP requests",
-		},
-		[]string{"method", "path", "code"},
-	)
-
-	httpRequestDuration = prometheus.NewHistogramVec(
-		prometheus.HistogramOpts{
-			Name:    "http_request_duration_seconds",
-			Help:    "Histogram of response time for handler",
-			Buckets: prometheus.DefBuckets,
-		},
-		[]string{"path"},
-	)
-)
-
-func init() {
-	prometheus.MustRegister(httpRequestsTotal)
-	prometheus.MustRegister(httpRequestDuration)
-}
-
-var _ = promhttp.Handler()
-
-func prometheusMiddleware() gin.HandlerFunc {
-	return func(c *gin.Context) {
-		start := time.Now()
-		c.Next()
-		duration := time.Since(start).Seconds()
-		status := fmt.Sprintf("%d", c.Writer.Status())
-		path := c.FullPath()
-		if path == "" {
-			path = "unknown"
-		}
-		httpRequestsTotal.WithLabelValues(c.Request.Method, path, status).Inc()
-		httpRequestDuration.WithLabelValues(path).Observe(duration)
-	}
-}
 
 func main() {
 	log.SetOutput(os.Stderr)
@@ -73,8 +29,6 @@ func main() {
 	log.Println("Starting server...")
 	router := gin.New()
     router.Use(corsMiddleware())
-    router.Use(prometheusMiddleware())
-    router.GET("/metrics", gin.WrapH(promhttp.Handler()))
 	router.GET("/fibonacci", fibonacciHandler)
 	router.POST("/video", videoPostHandler)
 	router.GET("/videos", videosGetHandler)
