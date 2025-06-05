@@ -3,6 +3,7 @@ name: it-works
 include:
   - ./backend/docker-compose.yml
   - ./frontend/docker-compose.yml
+  - ./monitoring/docker-compose.yml
 
 networks:
   it-works-network:
