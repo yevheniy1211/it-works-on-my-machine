@@ -1,0 +1,79 @@
+services:
+  node-exporter:
+    image: prom/node-exporter:latest
+    container_name: node-exporter
+    ports:
+      - "9100:9100"
+    volumes:
+      - /proc:/host/proc:ro
+      - /sys:/host/sys:ro
+      - /:/rootfs:ro
+    command:
+      - '--path.procfs=/host/proc'
+      - '--path.sysfs=/host/sys'
+      - '--path.rootfs=/rootfs'
+    networks:
+      - it-works-network
+
+  prometheus:
+    image: prom/prometheus
+    ports:
+      - "9195:9090"
+    volumes:
+      - ./prometheus:/etc/prometheus/
+    command:
+      - --config.file=/etc/prometheus/prometheus.yml
+      - --log.level=debug
+      - --web.listen-address=:9090
+      - --web.page-title='Prometheus'
+    networks:
+      - it-works-network
+
+  grafana:
+    image: grafana/grafana:${GRAFANA_VERSION:-11.6.0}
+    container_name: grafana
+    environment:
+      - GF_AUTH_ANONYMOUS_ORG_ROLE=Admin
+      - GF_SECURITY_ADMIN_USER=admin
+      - GF_SECURITY_ADMIN_PASSWORD=admin
+      - GF_AUTH_BASIC_ENABLED=false
+      - GF_SMTP_SKIP_VERIFY=true
+    volumes:
+      - ./grafana:/etc/grafana/provisioning/
+    ports:
+      - 3005:3000
+    networks:
+      - it-works-network
+
+  alertmanager:
+    image: prom/alertmanager:v0.28.1
+    container_name: alertmanager
+    volumes:
+      - ./alertmanager:/etc/alertmanager/
+    ports:
+      - 9993:9093
+    networks:
+      - it-works-network
+
+  loki:
+    image: grafana/loki:3.4.3
+    container_name: loki
+    command: ["-config.file=/etc/loki/loki.yaml"]
+    volumes:
+      - ./loki:/etc/loki/
+    ports:
+      - "3150:3100"
+    networks:
+      - it-works-network
+
+  promtail:
+    image: grafana/promtail:2.9.2
+    volumes:
+      - /var/lib/docker/containers:/var/lib/docker/containers:ro
+      - /var/log:/var/log
+      - /etc/hostname:/etc/host_hostname
+      - ./promtail/promtail-config.yaml:/etc/promtail/config.yaml
+      - /var/run/docker.sock:/var/run/docker.sock
+    command: -config.file=/etc/promtail/config.yaml
+    networks:
+      - it-works-network
