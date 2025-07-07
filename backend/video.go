@@ -13,6 +13,7 @@ import (
 	"github.com/go-pg/pg/v10"
 	"github.com/redis/go-redis/v9"
 	"gopkg.in/yaml.v3"
+	"crypto/tls"
 )
 
 var dbSession *pg.DB = nil
@@ -67,6 +68,7 @@ func getDB(c *gin.Context) *pg.DB {
 		User:     user,
 		Password: pass,
 		Database: name,
+		TLSConfig: &tls.Config{InsecureSkipVerify: true},
 	})
 	return dbSession
 }
@@ -206,5 +208,6 @@ func getRedis() (*redis.Client, error) {
 		Addr:     fmt.Sprintf("%s:%s", endpoint, port),
 		Password: "", // no password set
 		DB:       0,  // use default DB
+		TLSConfig: &tls.Config{InsecureSkipVerify: true},
 	}), nil
 }

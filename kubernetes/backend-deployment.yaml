@@ -1,0 +1,51 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  annotations:
+    kompose.cmd: kompose --file ../backend/docker-compose.yml convert
+    kompose.version: 1.36.0 (ae2a39403)
+  labels:
+    io.kompose.service: backend
+  name: backend
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      io.kompose.service: backend
+  template:
+    metadata:
+      annotations:
+        kompose.cmd: kompose --file ../backend/docker-compose.yml convert
+        kompose.version: 1.36.0 (ae2a39403)
+      labels:
+        io.kompose.service: backend
+    spec:
+      containers:
+        - name: backend
+          image: backend
+          imagePullPolicy: Never
+          ports:
+            - containerPort: 8080
+              name: http
+          env:
+            - name: DB_USER
+              valueFrom:
+                secretKeyRef:
+                  name: db-secret
+                  key: DB_USER
+            - name: DB_PASS
+              valueFrom:
+                secretKeyRef:
+                  name: db-secret
+                  key: DB_PASS
+            - name: DB_NAME
+              value: postgres
+            - name: DB_ENDPOINT
+              value: database-1.c1uo8swo8duw.eu-north-1.rds.amazonaws.com
+            - name: DB_PORT
+              value: "5432"
+            - name: REDIS_ENDPOINT
+              value: test-388syp.serverless.eun1.cache.amazonaws.com
+            - name: REDIS_PORT
+              value: "6379"
+      restartPolicy: Always
